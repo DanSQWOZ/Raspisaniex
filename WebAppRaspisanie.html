@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>📚 Расписание занятий</title>
+    
+    <!-- PWA Meta tags -->
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Расписание">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogItCg0LDRgdC/0LjRgdCw0L3QuNC1INC30LDQvdGP0YLQuNC5IiwKICAic2hvcnRfbmFtZSI6ICLQoNCw0YHQv9C40YHQsNC90LjQtSIsCiAgImRlc2NyaXB0aW9uIjogItCg0LDRgdC/0LjRgdCw0L3QuNC1INGE0LDQutGD0LvRjNGC0LXRgtCwIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmZmZmZmYiLAogICJ0aGVtZV9jb2xvciI6ICIjMmMzZTUwIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiZGF0YTppbWFnZS9zdmcreG1sO2Jhc2U2NCxQSE4yWnlCM2FXUjBhRDBpTmpRaUlHaGxhV2RvZEQwaU5qUWlJSFpwWlhkQ2IzZzlJakFnTUNCMk5qUWdOalFpSUdacGJHdzlJaU5qYzJNNU5EQWlQanh5WldOMElIZzlJalVpSUhrOUlqVWlJSGRwWkhSb1BTSTFOQ0lnYUdWcFoyaDBQU0kxTkNJZ2NuZzlJalVpTHo0OGRHVjRkQ0I0UFNJek1pSWdlVDBpTVRraUlHWnBiR3c5SWlObVptWWlJR1p2Ym5RdGMybDZaVDBpTVRnaUlHWnZiblF0ZDJWcFoyaDBQU0ppYjJ4a0lqNCtQQzloUEM5MFpYaDBQand2YzNabkUiLAogICAgICAic2l6ZXMiOiAiNjR4NjQiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2c3e50;
+            overflow-x: hidden;
+        }
+        
+        .app-container {
+            max-width: 100vw;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 20px 16px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .week-selector {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 16px;
+        }
+        
+        .week-btn {
+            flex: 1;
+            max-width: 150px;
+            padding: 16px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .week-btn:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .week-btn:hover:before {
+            left: 100%;
+        }
+        
+        .week-btn.active {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4);
+        }
+        
+        .week-btn:not(.active) {
+            background: rgba(255, 255, 255, 0.9);
+            color: #2c3e50;
+            border: 2px solid #e1e8ed;
+        }
+        
+        .week-btn:not(.active):hover {
+            background: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+        
+        .schedule-container {
+            padding: 0 16px 80px;
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .day-card {
+            background: white;
+            border-radius: 20px;
+            margin-bottom: 16px;
+            overflow: hidden;
+            box-shadow: 0 4px 25px rgba(0,0,0,0.08);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .day-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 40px rgba(0,0,0,0.12);
+        }
+        
+        .day-header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 16px 20px;
+            font-weight: 600;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
+        
+        .day-content {
+            padding: 16px;
+        }
+        
+        .class-block {
+            margin-bottom: 12px;
+            padding: 16px;
+            border-radius: 16px;
+            border-left: 4px solid;
+            position: relative;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+        
+        .class-block:last-child {
+            margin-bottom: 0;
+        }
+        
+        .class-block:hover {
+            transform: scale(1.02);
+        }
+        
+        .lecture {
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.1), rgba(52, 152, 219, 0.05));
+            border-left-color: #3498db;
+        }
+        
+        .practice {
+            background: linear-gradient(135deg, rgba(230, 126, 34, 0.1), rgba(230, 126, 34, 0.05));
+            border-left-color: #e67e22;
+        }
+        
+        .lab {
+            background: linear-gradient(135deg, rgba(39, 174, 96, 0.1), rgba(39, 174, 96, 0.05));
+            border-left-color: #27ae60;
+        }
+        
+        .type-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            opacity: 0.8;
+            letter-spacing: 1px;
+        }
+        
+        .class-time {
+            font-weight: 700;
+            font-size: 14px;
+            color: #2c3e50;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .class-time:before {
+            content: '🕐';
+            font-size: 12px;
+        }
+        
+        .class-name {
+            font-size: 14px;
+            line-height: 1.4;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .class-room {
+            font-size: 13px;
+            color: #7f8c8d;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .empty-day {
+            text-align: center;
+            color: #95a5a6;
+            font-style: italic;
+            padding: 40px 20px;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        .empty-day-emoji {
+            font-size: 32px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        /* Адаптив для мобильных */
+        @media (max-width: 768px) {
+            .header {
+                padding: 16px 12px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .week-selector {
+                margin: 16px 12px;
+                gap: 8px;
+            }
+            
+            .week-btn {
+                padding: 14px 20px;
+                font-size: 14px;
+                border-radius: 20px;
+            }
+            
+            .schedule-container {
+                padding: 0 12px 60px;
+            }
+            
+            .day-card {
+                margin-bottom: 12px;
+                border-radius: 16px;
+            }
+            
+            .day-header {
+                padding: 12px 16px;
+                font-size: 14px;
+            }
+            
+            .day-content {
+                padding: 12px;
+            }
+            
+            .class-block {
+                padding: 12px;
+                margin-bottom: 10px;
+                border-radius: 12px;
+            }
+            
+            .class-name {
+                font-size: 13px;
+            }
+            
+            .class-time {
+                font-size: 13px;
+            }
+            
+            .class-room {
+                font-size: 12px;
+            }
+        }
+        
+        /* Smooth scroll */
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        /* Loading animation */
+        .loading {
+            opacity: 0;
+            animation: fadeInUp 0.6s ease-out forwards;
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>📚 Расписание занятий</h1>
+        </div>
+        
+        <div class="week-selector">
+            <button class="week-btn active" onclick="showSchedule('upper')">
+                📅 Верх
+            </button>
+            <button class="week-btn" onclick="showSchedule('lower')">
+                📅 Низ
+            </button>
+        </div>
+        
+        <div id="schedule-container" class="schedule-container">
+            <!-- Расписание будет загружено здесь -->
+        </div>
+    </div>
+
+    <script>
+        // Данные расписаний
+        const schedules = {
+            upper: {
+                monday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '14:15-15:50',
+                        name: 'Детали механизмов, электронных и оптико-электронных устройств приборов',
+                        room: '1-367'
+                    },
+                    {
+                        type: 'practice',
+                        typeLabel: 'ПРАКТИКА',
+                        time: '16:00-17:35',
+                        name: 'Детали механизмов, электронных и оптико-электронных устройств приборов',
+                        room: '1-367'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '17:45-19:20',
+                        name: 'Системы автоматизированного проектирования (п/г 1,2)',
+                        room: '1-362'
+                    }
+                ],
+                tuesday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '14:15-15:50',
+                        name: 'Измерительные преобразователи и датчики',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'practice',
+                        typeLabel: 'ПРАКТИКА',
+                        time: '16:00-17:35',
+                        name: 'Статистическая обработка экспериментальных данных',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '17:45-19:20',
+                        name: 'Схемотехника аналоговых измерительных устройств',
+                        room: '1-363'
+                    }
+                ],
+                wednesday: [],
+                thursday: [],
+                friday: [
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '14:15-15:50',
+                        name: 'Измерительные преобразователи и датчики (п/г 1,2)',
+                        room: '1-045а'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '16:00-17:35',
+                        name: 'Схемотехника аналоговых измерительных устройств (п/г 1,2)',
+                        room: '1-045а'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '17:45-19:20',
+                        name: 'Схемотехника аналоговых измерительных устройств (п/г 1,2)',
+                        room: '1-045а'
+                    }
+                ],
+                saturday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '08:30-10:05',
+                        name: 'Приборы и методы измерений',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '10:15-11:50',
+                        name: 'Приборы и методы измерений (п/г 1,2)',
+                        room: '1-363'
+                    }
+                ],
+                sunday: []
+            },
+            lower: {
+                monday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '12:00-13:35',
+                        name: 'Детали механизмов, электронных и оптико-электронных устройств приборов',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'practice',
+                        typeLabel: 'ПРАКТИКА',
+                        time: '14:15-15:50',
+                        name: 'Детали механизмов, электронных и оптико-электронных устройств приборов',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '16:00-17:35',
+                        name: 'Системы автоматизированного проектирования',
+                        room: '1-374'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '17:45-19:20',
+                        name: 'Системы автоматизированного проектирования (п/г 1,2)',
+                        room: '1-362'
+                    }
+                ],
+                tuesday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '14:15-15:50',
+                        name: 'Измерительные преобразователи и датчики',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'practice',
+                        typeLabel: 'ПРАКТИКА',
+                        time: '16:00-17:35',
+                        name: 'Статистическая обработка экспериментальных данных',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '17:45-19:20',
+                        name: 'Схемотехника аналоговых измерительных устройств',
+                        room: '1-363'
+                    }
+                ],
+                wednesday: [],
+                thursday: [],
+                friday: [
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '14:15-15:50',
+                        name: 'Измерительные преобразователи и датчики (п/г 1,2)',
+                        room: '1-045а'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '16:00-17:35',
+                        name: 'Детали механизмов, электронных и оптико-электронных устройств приборов (п/г 1,2)',
+                        room: '1-367а'
+                    }
+                ],
+                saturday: [
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '08:30-10:05',
+                        name: 'Приборы и методы измерений',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lab',
+                        typeLabel: 'ЛАБ. РАБОТА',
+                        time: '10:15-11:50',
+                        name: 'Приборы и методы измерений (п/г 1,2)',
+                        room: '1-363'
+                    },
+                    {
+                        type: 'lecture',
+                        typeLabel: 'ЛЕКЦИЯ',
+                        time: '12:00-13:35',
+                        name: 'Статистическая обработка экспериментальных данных',
+                        room: '1-374'
+                    }
+                ],
+                sunday: []
+            }
+        };
+
+        const dayNames = {
+            monday: 'ПОНЕДЕЛЬНИК',
+            tuesday: 'ВТОРНИК', 
+            wednesday: 'СРЕДА',
+            thursday: 'ЧЕТВЕРГ',
+            friday: 'ПЯТНИЦА',
+            saturday: 'СУББОТА',
+            sunday: 'ВОСКРЕСЕНЬЕ'
+        };
+
+        const emptyMessages = {
+            wednesday: { emoji: '🎉', text: 'ВЫХОДНОЙ' },
+            thursday: { emoji: '🎉', text: 'ВЫХОДНОЙ<br><small>(Физ-ра)</small>' },
+            sunday: { emoji: '🎉', text: 'ВЫХОДНОЙ' }
+        };
+
+        let currentSchedule = 'upper';
+
+        function createClassBlock(classItem) {
+            return `
+                <div class="class-block ${classItem.type} loading">
+                    <div class="type-label">${classItem.typeLabel}</div>
+                    <div class="class-time">${classItem.time}</div>
+                    <div class="class-name">${classItem.name}</div>
+                    <div class="class-room">📍 ${classItem.room}</div>
+                </div>
+            `;
+        }
+
+        function createEmptyDay(day) {
+            const message = emptyMessages[day];
+            return `
+                <div class="empty-day loading">
+                    <span class="empty-day-emoji">${message.emoji}</span>
+                    ${message.text}
+                </div>
+            `;
+        }
+
+        function createDayCard(day, classes) {
+            const isEmpty = classes.length === 0;
+            const content = isEmpty ? createEmptyDay(day) : 
+                classes.map(classItem => createClassBlock(classItem)).join('');
+
+            return `
+                <div class="day-card loading">
+                    <div class="day-header">${dayNames[day]}</div>
+                    <div class="day-content">
+                        ${content}
+                    </div>
+                </div>
+            `;
+        }
+
+        function showSchedule(type) {
+            currentSchedule = type;
+            
+            // Обновляем активную кнопку
+            document.querySelectorAll('.week-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Получаем расписание
+            const schedule = schedules[type];
+            const container = document.getElementById('schedule-container');
+            
+            // Плавное исчезновение
+            container.style.opacity = '0';
+            container.style.transform = 'translateY(20px)';
+            
+            setTimeout(() => {
+                // Создаем HTML для всех дней
+                container.innerHTML = Object.keys(schedule)
+                    .map(day => createDayCard(day, schedule[day]))
+                    .join('');
+                
+                // Плавное появление
+                container.style.opacity = '1';
+                container.style.transform = 'translateY(0)';
+                
+                // Анимация появления карточек с задержкой
+                setTimeout(() => {
+                    const elements = container.querySelectorAll('.loading');
+                    elements.forEach((el, index) => {
+                        setTimeout(() => {
+                            el.classList.remove('loading');
+                        }, index * 100);
+                    });
+                }, 100);
+            }, 200);
+        }
+
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            showSchedule('upper');
+            
+            // Регистрация Service Worker для PWA
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('data:text/javascript;base64,Y29uc3QgQ0FDSEVFX05BTUUgPSAnc2NoZWR1bGUtdjEnOwpjb25zdCB1cmxzVG9DYWNoZSA9IFsnLyddOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZnVuY3Rpb24oZXZlbnQpIHsKICBldmVudC53YWl0VW50aWwoCiAgICBjYWNoZXMub3BlbihDQUNIRV9OQU1FKQogICAgICAudGhlbihmdW5jdGlvbihjYWNoZSkgewogICAgICAgIHJldHVybiBjYWNoZS5hZGRBbGwodXJsc1RvQ2FjaGUpOwogICAgICB9KQogICk7Cn0pOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdmZXRjaCcsIGZ1bmN0aW9uKGV2ZW50KSB7CiAgZXZlbnQucmVzcG9uZFdpdGgoCiAgICBjYWNoZXMubWF0Y2goZXZlbnQucmVxdWVzdCkKICAgICAgLnRoZW4oZnVuY3Rpb24ocmVzcG9uc2UpIHsKICAgICAgICByZXR1cm4gcmVzcG9uc2UgfHwgZmV0Y2goZXZlbnQucmVxdWVzdCk7CiAgICAgIH0pCiAgKTsKfSk7');
+            }
+        });
+
+        // Touch gestures для переключения расписаний
+        let startX = 0;
+        let startY = 0;
+
+        document.addEventListener('touchstart', function(e) {
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            const endX = e.changedTouches[0].clientX;
+            const endY = e.changedTouches[0].clientY;
+            
+            const deltaX = startX - endX;
+            const deltaY = startY - endY;
+            
+            // Проверяем что это горизонтальный свайп
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 50) {
+                if (deltaX > 0 && currentSchedule === 'upper') {
+                    // Свайп влево - переключаем на нижнюю неделю
+                    document.querySelector('.week-btn:nth-child(2)').click();
+                } else if (deltaX < 0 && currentSchedule === 'lower') {
+                    // Свайп вправо - переключаем на верхнюю неделю
+                    document.querySelector('.week-btn:nth-child(1)').click();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
